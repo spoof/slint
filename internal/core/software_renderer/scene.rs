@@ -9,7 +9,7 @@ use super::{
 };
 use crate::graphics::{SharedImageBuffer, TexturePixelFormat};
 use crate::lengths::{PointLengths as _, SizeLengths as _};
-use crate::Color;
+use crate::{Brush, Color};
 use alloc::rc::Rc;
 use alloc::vec::Vec;
 use euclid::Length;
@@ -279,6 +279,10 @@ pub enum SceneCommand {
     Gradient {
         gradient_index: u16,
     },
+    ZenoPath {
+        /// zenopath_index is an index in the [`SceneVectors::zeno_paths`] array
+        zenopath_index: u16,
+    },
 }
 
 pub struct SceneTexture<'a> {
@@ -515,4 +519,13 @@ pub struct GradientCommand {
     pub right_clip: PhysicalLength,
     pub top_clip: PhysicalLength,
     pub bottom_clip: PhysicalLength,
+}
+
+#[derive(Debug)]
+pub struct ZenoPathCommand {
+    stroke_mask: Option<Vec<u8>>,
+    stroke_brush: Brush,
+
+    fill_mask: Option<Vec<u8>>,
+    fill_brush: Brush,
 }

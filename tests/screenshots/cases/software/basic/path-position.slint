@@ -1,0 +1,32 @@
+// Copyright © SixtyFPS GmbH <info@slint.dev>
+// SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-Slint-Royalty-free-2.0 OR LicenseRef-Slint-Software-3.0
+
+export component TestCase inherits Window {
+    width: 64px;
+    height: 64px;
+    background: lightblue;
+
+    Path {
+        x: 28px;
+        width: 32px;
+        fill: cyan;
+        stroke: crimson;
+        stroke-width: 4px;
+        MoveTo {
+            x: 10;
+            y: 10;
+        }
+
+        LineTo {
+            x: 80;
+            y: 30;
+        }
+
+        LineTo {
+            x: 30;
+            y: 75;
+        }
+
+        Close { }
+    }
+}

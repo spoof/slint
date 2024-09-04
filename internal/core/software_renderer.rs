@@ -36,13 +36,12 @@ use alloc::rc::{Rc, Weak};
 use alloc::{vec, vec::Vec};
 use core::cell::{Cell, RefCell};
 use core::pin::Pin;
+pub use draw_functions::{PremultipliedRgbaColor, Rgb565Pixel, TargetPixel};
 use euclid::Length;
 use fixed::Fixed;
 #[allow(unused)]
 use num_traits::Float;
 use num_traits::NumCast;
-
-pub use draw_functions::{PremultipliedRgbaColor, Rgb565Pixel, TargetPixel};
 
 type PhysicalLength = euclid::Length<i16, PhysicalPx>;
 type PhysicalRect = euclid::Rect<i16, PhysicalPx>;
@@ -1024,6 +1023,15 @@ fn render_window_frame_by_line(
                                     extra_left_clip,
                                 );
                             }
+                            SceneCommand::ZenoPath { zenopath_index } => {
+                                let cmd = &scene.vectors.zeno_paths[zenopath_index as usize];
+                                draw_functions::draw_zeno_path_line(
+                                    &PhysicalRect { origin: span.pos, size: span.size },
+                                    scene.current_line,
+                                    cmd,
+                                    range_buffer,
+                                )
+                            }
                         }
                     }
                 },
@@ -1146,6 +1154,7 @@ trait ProcessScene {
     fn process_simple_rectangle(&mut self, geometry: PhysicalRect, color: PremultipliedRgbaColor);
     fn process_rounded_rectangle(&mut self, geometry: PhysicalRect, data: RoundedRectangle);
     fn process_gradient(&mut self, geometry: PhysicalRect, gradient: GradientCommand);
+    fn process_path(&mut self, geometry: PhysicalRect, path: ZenoPathCommand);
 }
 
 fn process_rectangle_impl(
@@ -1464,6 +1473,12 @@ impl<B: target_pixel_buffer::TargetPixelBuffer> ProcessScene for RenderToBuffer<
             );
         });
     }
+
+    fn process_path(&mut self, geometry: PhysicalRect, path: ZenoPathCommand) {
+        self.foreach_ranges(&geometry, |line, buffer, _extra_left_clip, _extra_right_clip| {
+            draw_functions::draw_zeno_path_line(&geometry, PhysicalLength::new(line), &path, buffer)
+        });
+    }
 }
 
 #[derive(Default)]
@@ -1569,6 +1584,20 @@ impl ProcessScene for PrepareScene {
                 z: self.items.len() as u16,
                 command: SceneCommand::Gradient { gradient_index },
             });
+        }
+    }
+
+    fn process_path(&mut self, geometry: PhysicalRect, path: ZenoPathCommand) {
+        let size = geometry.size;
+        if !size.is_empty() {
+            let zenopath_index = self.vectors.zeno_paths.len() as u16;
+            self.vectors.zeno_paths.push(path);
+            self.items.push(SceneItem {
+                pos: geometry.origin,
+                size,
+                z: self.items.len() as u16,
+                command: SceneCommand::ZenoPath { zenopath_index },
+            })
         }
     }
 }
@@ -2329,9 +2358,96 @@ impl<T: ProcessScene> crate::item_rendering::ItemRenderer for SceneBuilder<'_, T
         }
     }
 
-    #[cfg(feature = "std")]
-    fn draw_path(&mut self, _path: Pin<&crate::items::Path>, _: &ItemRc, _size: LogicalSize) {
-        // TODO
+    #[cfg(feature = "path")]
+    fn draw_path(&mut self, path: Pin<&crate::items::Path>, item: &ItemRc, size: LogicalSize) {
+        use zeno::PathBuilder;
+        let geom = LogicalRect::from(size);
+
+        let clipped = match geom.intersection(&self.current_state.clip) {
+            Some(geom) => geom,
+            None => return,
+        };
+
+        let geometry = (clipped.translate(self.current_state.offset.to_vector()).cast()
+            * self.scale_factor)
+            .round()
+            .cast()
+            .transformed(self.rotation);
+
+        let path_props = path.as_ref();
+        let mut zeno_pb: Vec<zeno::Command> = Vec::new();
+        let (logical_offset, path_events2) = path.fitted_path_events(item).unwrap();
+
+        for event in path_events2.iter() {
+            match event {
+                Event::Begin { at } => {
+                    zeno_pb.move_to([at.x, at.y]);
+                }
+                Event::Line { from: _, to } => {
+                    zeno_pb.line_to([to.x, to.y]);
+                }
+                Event::Quadratic { from: _, ctrl, to } => {
+                    zeno_pb.quad_to([ctrl.x, ctrl.y], [to.x, to.y]);
+                }
+                Event::Cubic { from: _, ctrl1, ctrl2, to } => {
+                    zeno_pb.curve_to([ctrl1.x, ctrl1.y], [ctrl2.x, ctrl2.y], [to.x, to.y]);
+                }
+                Event::End { last: _, first: _, close } => {
+                    if close {
+                        zeno_pb.close();
+                    }
+                }
+            }
+        }
+
+        let transform = Some(zeno::Transform::translation(logical_offset.x, logical_offset.y));
+
+        let fill_mask = if !path_props.fill().is_transparent() {
+            let mut mask = Vec::new();
+            mask.resize((geometry.size.width * geometry.size.height) as usize, 0u8);
+
+            let fill_rule = match path_props.fill_rule() {
+                FillRule::Evenodd => zeno::Fill::EvenOdd,
+                FillRule::Nonzero => zeno::Fill::NonZero,
+            };
+
+            zeno::Mask::new(&zeno_pb)
+                .transform(transform)
+                .style(fill_rule)
+                .size(geometry.size.width, geometry.size.height)
+                .render_into(&mut mask, None);
+
+            Some(mask)
+        } else {
+            None
+        };
+
+        let stroke_mask = if !path_props.stroke().is_transparent() {
+            let mut mask = Vec::new();
+            mask.resize((geometry.size.width * geometry.size.height) as usize, 0u8);
+
+            let stroke_width = path_props.stroke_width().0;
+
+            zeno::Mask::new(&zeno_pb)
+                .transform(transform)
+                .style(zeno::Stroke::new(stroke_width).cap(zeno::Cap::Butt).join(zeno::Join::Miter))
+                .size(geometry.size.width, geometry.size.height)
+                .render_into(&mut mask, None);
+
+            Some(mask)
+        } else {
+            None
+        };
+
+        self.processor.process_path(
+            geometry.cast(),
+            ZenoPathCommand {
+                stroke_mask,
+                stroke_brush: path_props.stroke(),
+                fill_mask,
+                fill_brush: path_props.fill(),
+            },
+        );
     }
 
     fn draw_box_shadow(
