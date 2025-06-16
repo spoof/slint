@@ -23,7 +23,7 @@ use crate::item_rendering::{
     CachedRenderingData, DirtyRegion, PartialRenderingState, RenderBorderRectangle, RenderImage,
     RenderRectangle,
 };
-use crate::items::{ItemRc, TextOverflow, TextWrap};
+use crate::items::{FillRule, ItemRc, TextOverflow, TextWrap};
 use crate::lengths::{
     LogicalBorderRadius, LogicalLength, LogicalPoint, LogicalRect, LogicalSize, LogicalVector,
     PhysicalPx, PointLengths, RectLengths, ScaleFactor, SizeLengths,
@@ -39,6 +39,7 @@ use core::pin::Pin;
 pub use draw_functions::{PremultipliedRgbaColor, Rgb565Pixel, TargetPixel};
 use euclid::Length;
 use fixed::Fixed;
+use lyon_path::Event;
 #[allow(unused)]
 use num_traits::Float;
 use num_traits::NumCast;
@@ -2358,7 +2359,7 @@ impl<T: ProcessScene> crate::item_rendering::ItemRenderer for SceneBuilder<'_, T
         }
     }
 
-    #[cfg(feature = "path")]
+    // #[cfg(feature = "path")]
     fn draw_path(&mut self, path: Pin<&crate::items::Path>, item: &ItemRc, size: LogicalSize) {
         use zeno::PathBuilder;
         let geom = LogicalRect::from(size);

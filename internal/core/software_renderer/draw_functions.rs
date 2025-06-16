@@ -655,7 +655,7 @@ pub(super) fn draw_gradient_line(
 }
 
 /// Draws a path using two mask buffers and brushes (for fill and stroke)
-#[cfg(feature = "path")]
+// #[cfg(feature = "path")]
 pub(super) fn draw_zeno_path_line(
     span: &PhysicalRect,
     line: PhysicalLength,

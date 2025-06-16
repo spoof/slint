@@ -34,9 +34,7 @@ pub type Transform = euclid::default::Transform2D<Coord>;
 pub(crate) mod color;
 pub use color::*;
 
-#[cfg(feature = "std")]
 mod path;
-#[cfg(feature = "std")]
 pub use path::*;
 
 mod brush;

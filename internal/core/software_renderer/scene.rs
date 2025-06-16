@@ -20,6 +20,7 @@ pub struct SceneVectors {
     pub rounded_rectangles: Vec<RoundedRectangle>,
     pub shared_buffers: Vec<SharedBufferCommand>,
     pub gradients: Vec<GradientCommand>,
+    pub zeno_paths: Vec<ZenoPathCommand>,
 }
 
 pub struct Scene {
@@ -523,9 +524,9 @@ pub struct GradientCommand {
 
 #[derive(Debug)]
 pub struct ZenoPathCommand {
-    stroke_mask: Option<Vec<u8>>,
-    stroke_brush: Brush,
+    pub stroke_mask: Option<Vec<u8>>,
+    pub stroke_brush: Brush,
 
-    fill_mask: Option<Vec<u8>>,
-    fill_brush: Brush,
+    pub fill_mask: Option<Vec<u8>>,
+    pub fill_brush: Brush,
 }

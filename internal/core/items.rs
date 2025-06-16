@@ -54,10 +54,8 @@ mod input_items;
 pub use input_items::*;
 mod image;
 pub use self::image::*;
-#[cfg(feature = "std")]
 mod path;
 pub use crate::menus::MenuItem;
-#[cfg(feature = "std")]
 pub use path::*;
 
 /// Alias for `&mut dyn ItemRenderer`. Required so cbindgen generates the ItemVTable

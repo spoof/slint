@@ -38,13 +38,13 @@ pub fn compile_paths(
             _ => return,
         };
 
-        #[cfg(feature = "software-renderer")]
-        if _embed_resources == EmbedResourcesKind::EmbedTextures {
-            diag.push_warning(
-                "Path element is not supported with the software renderer".into(),
-                &*elem_.borrow(),
-            )
-        }
+        // #[cfg(feature = "software-renderer")]
+        // if _embed_resources == EmbedResourcesKind::EmbedTextures {
+        //     diag.push_warning(
+        //         "Path element is not supported with the software renderer".into(),
+        //         &*elem_.borrow(),
+        //     )
+        // }
 
         let element_types = &accepted_type.additional_accepted_child_types;
 

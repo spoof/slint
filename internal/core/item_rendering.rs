@@ -397,7 +397,6 @@ pub trait ItemRenderer {
         _self_rc: &ItemRc,
         _size: LogicalSize,
     );
-    #[cfg(feature = "std")]
     fn draw_path(&mut self, path: Pin<&Path>, _self_rc: &ItemRc, _size: LogicalSize);
     fn draw_box_shadow(
         &mut self,
@@ -1054,7 +1053,6 @@ impl<T: ItemRenderer + ItemRendererFeatures> ItemRenderer for PartialRenderer<'_
     forward_rendering_call2!(fn draw_image(dyn RenderImage));
     forward_rendering_call2!(fn draw_text(dyn RenderText));
     forward_rendering_call!(fn draw_text_input(TextInput));
-    #[cfg(feature = "std")]
     forward_rendering_call!(fn draw_path(Path));
     forward_rendering_call!(fn draw_box_shadow(BoxShadow));
 

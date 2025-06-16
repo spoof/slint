@@ -19,27 +19,27 @@ categories = ["gui", "development-tools", "no-std"]
 path = "lib.rs"
 
 [features]
-ffi = ["dep:static_assertions"]           # Expose C ABI
-libm = ["num-traits/libm", "euclid/libm"]
+ffi = ["dep:static_assertions"]                                                                      # Expose C ABI
+libm = ["num-traits/libm", "euclid/libm", "lyon_path", "lyon_geom", "lyon_algorithms", "lyon_extra"]
 # Allow the viewer to query at runtime information about item types
 rtti = []
 # Use the standard library
 std = [
-  "euclid/std",
-  "once_cell/std",
-  "scoped-tls-hkt",
-  "lyon_path",
-  "lyon_algorithms",
-  "lyon_geom",
-  "lyon_extra",
-  "dep:web-time",
-  "image-decoders",
-  "svg",
-  "raw-window-handle-06?/std",
-  "chrono/std",
-  "chrono/wasmbind",
-  "chrono/clock",
-  "dep:sys-locale",
+    "euclid/std",
+    "once_cell/std",
+    "scoped-tls-hkt",
+    "lyon_path",
+    "lyon_algorithms",
+    "lyon_geom",
+    "lyon_extra",
+    "dep:web-time",
+    "image-decoders",
+    "svg",
+    "raw-window-handle-06?/std",
+    "chrono/std",
+    "chrono/wasmbind",
+    "chrono/clock",
+    "dep:sys-locale",
 ]
 # Unsafe feature meaning that there is only one core running and all thread_local are static.
 # You can only enable this feature if you are sure that any API of this crate is only called
@@ -55,7 +55,7 @@ image-decoders = ["dep:image", "dep:clru"]
 image-default-formats = ["image?/default-formats"]
 svg = ["dep:resvg", "shared-fontdb"]
 
-path = ["dep:zeno"]
+# path = ["dep:zeno"]
 
 box-shadow-cache = []
 
@@ -81,10 +81,10 @@ auto_enums = "0.8.0"
 cfg-if = "1"
 derive_more = { workspace = true, features = ["error"] }
 euclid = { workspace = true }
-lyon_algorithms = { version = "1.0", optional = true }
-lyon_geom = { version = "1.0", optional = true }
-lyon_path = { version = "1.0", optional = true }
-lyon_extra = { version = "1.0.1", optional = true }
+lyon_algorithms = { version = "1.0", optional = true, default-features = false, path = "../../../lyon/crates/algorithms/" }
+lyon_geom = { version = "1.0", optional = true, default-features = false, path = "../../../lyon/crates/geom/" }
+lyon_path = { version = "1.0", optional = true, default-features = false, path = "../../../lyon/crates/path/" }
+lyon_extra = { version = "1.0.1", optional = true, default-features = false, path = "../../../lyon/crates/extra/" }
 num-traits = { version = "0.2", default-features = false }
 once_cell = { version = "1.5", default-features = false, features = ["critical-section"] }
 pin-project = "1"
@@ -109,7 +109,7 @@ clru = { workspace = true, optional = true }
 resvg = { workspace = true, optional = true }
 fontdb = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
-zeno = { workspace = true, optional = true }
+zeno = { workspace = true, optional = false }
 
 raw-window-handle-06 = { workspace = true, optional = true }
 bitflags = { version = "2.4.2" }
